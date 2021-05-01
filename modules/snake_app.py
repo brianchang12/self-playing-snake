@@ -59,9 +59,6 @@ class SnakeApp:
         while running:
             self.play_step()
             self.update_ui()
-            reward = self.collision_detection()
-            if reward == -10:
-                running = False
             if self.snake_length == MAX_SNAKE:
                 pygame.time.delay(1000)
             self.clock.tick(self.frame_rate)
@@ -72,20 +69,6 @@ class SnakeApp:
         self.screen.blit(self.apple.image, self.apple.rect)
         self.snake_components.draw(self.screen)
         pygame.display.update(self.screen.get_rect())
-
-    def collision_detection(self):
-        reward = 0
-        if pygame.sprite.spritecollideany(self.head, self.non_head) is not None \
-                or self.game_iteration > 100 * self.snake_length:
-            reward = -10
-            pygame.time.delay(300)
-        if self.head.rect.colliderect(self.apple.rect):
-            coordinate = self.apple.randomize(self.snake_components)
-            self.apple.rect = self.apple.image.get_rect(center=coordinate)
-            pygame.event.post(pygame.event.Event(APPLE_EVENT))
-            reward = 10
-            self.score += 1
-        return reward
 
     def reset(self):
         self.screen.fill((0, 0, 0))
@@ -124,6 +107,28 @@ class SnakeApp:
                 if self.frame_rate <= 17:
                     self.frame_rate += 0.2
         self.move_snake()
+        reward = 0
+        game_over = False
+        if self.collided() or self.game_iteration > 100 * self.snake_length:
+            reward = -10
+            game_over = True
+            pygame.time.delay(300)
+        if self.head.rect.colliderect(self.apple.rect):
+            coordinate = self.apple.randomize(self.snake_components)
+            self.apple.rect = self.apple.image.get_rect(center=coordinate)
+            pygame.event.post(pygame.event.Event(APPLE_EVENT))
+            reward = 10
+            self.score += 1
+        return reward, game_over, self.score
+
+    def collided(self, point=None) -> bool:
+        compare_rect = self.head.rect
+        if point is not None:
+            compare_rect = pygame.Surface((BODY_WIDTH - 0.1, BODY_HEIGHT - 0.1)).get_rect(center=(point.x, point.y))
+        for non_head_sprite in self.non_head.sprites():
+            if compare_rect.colliderect(non_head_sprite.rect):
+                return True
+        return False
 
     def move_snake(self):
         keys_pressed = pygame.key.get_pressed()
