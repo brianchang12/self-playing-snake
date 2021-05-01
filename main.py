@@ -8,6 +8,7 @@ if __name__ == '__main__':
     running = True
     while running:
         running = snake_game.execute()
+        snake_game.reset()
     pygame.quit()
 
 

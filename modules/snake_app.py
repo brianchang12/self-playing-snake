@@ -11,138 +11,163 @@ from text_asset.title import Title
 
 
 class SnakeApp:
-    pass
 
-    def execute(self) -> bool:
-        snake_length = 3
-        clock = pygame.time.Clock()
-        non_head = pygame.sprite.Group()
-        screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+    def __init__(self):
+        self.score = 0
+        self.snake_length = 3
+        self.clock = pygame.time.Clock()
+        self.non_head = pygame.sprite.Group()
+        self.screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
         top_border = HorizontalBorder(x_coord=SCREEN_WIDTH / 2, y_coord=BODY_HEIGHT / 2)
         bottom_border = HorizontalBorder(x_coord=SCREEN_WIDTH / 2, y_coord=SCREEN_HEIGHT - (BODY_HEIGHT / 2))
         left_border = VerticalBorder(x_coord=BODY_WIDTH / 2, y_coord=SCREEN_HEIGHT / 2)
         right_border = VerticalBorder(x_coord=SCREEN_WIDTH - (BODY_WIDTH / 2), y_coord=SCREEN_HEIGHT / 2)
-        borders = pygame.sprite.Group()
-        borders.add(top_border, bottom_border, left_border, right_border)
-        borders.draw(screen)
-        apple_group = pygame.sprite.Group()
+        self.borders = pygame.sprite.Group()
+        self.borders.add(top_border, left_border, bottom_border, right_border)
+        self.borders.draw(self.screen)
+        self.apple_group = pygame.sprite.Group()
+        head_tail = self._build_initial_snake()
+        self.head = head_tail[0]
+        self.tail = head_tail[1]
+        self.non_head.add(top_border, left_border, right_border, bottom_border)
+        self.snake_components = pygame.sprite.Group()
+        traverse = self.head
+        while traverse is not None:
+            if traverse.head is False:
+                self.non_head.add(traverse)
+            self.snake_components.add(traverse)
+            traverse = traverse.next
+        self.snake_components.draw(self.screen)
+        self.apple = Apple(self.snake_components)
+        self.screen.blit(self.apple.image, self.apple.rect)
+        pygame.display.update(self.screen.get_rect())
+        self.frame_rate = 10
+        self.game_iteration = 0
+
+    @staticmethod
+    def _build_initial_snake() -> tuple:
         head = SnakeComponent(head=True, speed=[0, -BODY_HEIGHT])
         head.next = SnakeComponent(speed=[0, -BODY_HEIGHT], x_coord=head.rect.center[0],
                                    y_coord=head.rect.center[1] + BODY_HEIGHT)
         head.next.next = SnakeComponent(speed=[0, -BODY_HEIGHT], x_coord=head.next.rect.center[0],
                                         y_coord=head.next.rect.center[1] + BODY_HEIGHT)
         tail = head.next.next
-        for border in borders:
-            non_head.add(border)
-        traverse = head
-        snake_components = pygame.sprite.Group()
+        return head, tail
+
+    def execute(self):
+        running = True
+        while running:
+            self.play_step()
+            self.update_ui()
+            reward = self.collision_detection()
+            if reward == -10:
+                running = False
+            if self.snake_length == MAX_SNAKE:
+                pygame.time.delay(1000)
+            self.clock.tick(self.frame_rate)
+
+    def update_ui(self):
+        self.screen.fill((0, 0, 0))
+        self.borders.draw(self.screen)
+        self.screen.blit(self.apple.image, self.apple.rect)
+        self.snake_components.draw(self.screen)
+        pygame.display.update(self.screen.get_rect())
+
+    def collision_detection(self):
+        reward = 0
+        if pygame.sprite.spritecollideany(self.head, self.non_head) is not None \
+                or self.game_iteration > 100 * self.snake_length:
+            reward = -10
+            pygame.time.delay(300)
+        if self.head.rect.colliderect(self.apple.rect):
+            coordinate = self.apple.randomize(self.snake_components)
+            self.apple.rect = self.apple.image.get_rect(center=coordinate)
+            pygame.event.post(pygame.event.Event(APPLE_EVENT))
+            reward = 10
+            self.score += 1
+        return reward
+
+    def reset(self):
+        self.screen.fill((0, 0, 0))
+        self.game_iteration = 0
+        self.score = 0
+        self.snake_length = 3
+        self.frame_rate = 10
+        self.game_iteration = 0
+        for component in self.snake_components:
+            component.kill()
+        head_tail = self._build_initial_snake()
+        self.head = head_tail[0]
+        self.tail = head_tail[1]
+        traverse = self.head
         while traverse is not None:
             if traverse.head is False:
-                non_head.add(traverse)
-            snake_components.add(traverse)
+                self.non_head.add(traverse)
+            self.snake_components.add(traverse)
             traverse = traverse.next
-        snake_components.draw(screen)
-        apple = Apple(snake_components)
-        apple_group.add(apple)
-        apple_group.draw(screen)
-        pygame.display.update(screen.get_rect())
-        frame_rate = 10
-        reset_screen = True
-        running = True
-        reset_title = ''
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                    reset_screen = False
-                if event.type == APPLE_EVENT:
-                    apple = Apple(snake_components)
-                    apple_group.add(apple)
-                    pygame.event.post(pygame.event.Event(GROW_EVENT))
-                    if frame_rate <= 17:
-                        frame_rate += 0.2
-            keys_pressed = pygame.key.get_pressed()
-            tail_speed = [tail.speed[0], tail.speed[1]]
-            tail_x = tail.rect.center[0]
-            tail_y = tail.rect.center[1]
-            if keys_pressed[K_UP] and head.speed[0] != 0:
-                head.speed[0] = 0
-                head.speed[1] = -BODY_HEIGHT
-                head.rect.move_ip(head.speed[0], head.speed[1])
-                prev_speed = head.speed
-                self.updater(head.next, prev_speed)
-            elif keys_pressed[K_LEFT] and head.speed[1] != 0:
-                head.speed[0] = -BODY_WIDTH
-                head.speed[1] = 0
-                head.rect.move_ip(head.speed[0], head.speed[1])
-                prev_speed = head.speed
-                self.updater(head.next, prev_speed)
-            elif keys_pressed[K_RIGHT] and head.speed[1] != 0:
-                head.speed[0] = BODY_WIDTH
-                head.speed[1] = 0
-                head.rect.move_ip(head.speed[0], head.speed[1])
-                prev_speed = head.speed
-                self.updater(head.next, prev_speed)
-            elif keys_pressed[K_DOWN] and head.speed[0] != 0:
-                head.speed[0] = 0
-                head.speed[1] = BODY_HEIGHT
-                head.rect.move_ip(head.speed[0], head.speed[1])
-                prev_speed = head.speed
-                self.updater(head.next, prev_speed)
-            else:
-                head.rect.move_ip(head.speed[0], head.speed[1])
-                prev_speed = head.speed
-                self.updater(head.next, prev_speed)
-            if pygame.event.peek(GROW_EVENT):
-                tail_node = SnakeComponent(speed=tail_speed,
-                                           x_coord=tail_x, y_coord=tail_y)
-                tail.next = tail_node
-                tail = tail_node
-                snake_components.add(tail_node)
-                non_head.add(tail_node)
-                snake_length += 1
-            screen.fill((0, 0, 0))
-            borders.draw(screen)
-            apple_group.draw(screen)
-            snake_components.draw(screen)
-            pygame.display.update(screen.get_rect())
-            if pygame.sprite.spritecollideany(head, non_head) is not None:
-                pygame.time.delay(300)
-                running = False
-                reset_title = "GAME OVER"
-            if pygame.sprite.spritecollideany(head, apple_group) is not None:
-                pygame.sprite.spritecollideany(head, apple_group).kill()
-                pygame.event.post(pygame.event.Event(APPLE_EVENT))
-            if snake_length == MAX_SNAKE:
-                pygame.time.delay(300)
-                running = False
-                reset_title = "CONGRATULATIONS, YOU WON"
-            clock.tick(frame_rate)
-        snake_components.empty()
-        non_head.empty()
-        borders.empty()
-        apple_group.empty()
-        screen.fill((0, 0, 0))
-        title = Title(reset_title)
-        screen.blit(title.image, title.rect)
-        button = ResetButton()
-        screen.blit(button.image, button.rect)
-        pygame.display.update(screen.get_rect())
-        ret = False
-        while reset_screen:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    reset_screen = False
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    mouse = pygame.mouse.get_pos()
-                    mouse_x = mouse[0]
-                    mouse_y = mouse[1]
-                    if mouse_x >= button.rect.topleft[0] and mouse_x <= button.rect.topright[0] and mouse_y >= button.rect.topleft[1] and mouse_y <= button.rect.bottomleft[1]:
-                        reset_screen = False
-                        ret = True
-        return ret
+        coordinate = self.apple.randomize(self.snake_components)
+        self.apple.rect = self.apple.image.get_rect(center=coordinate)
+        self.borders.draw(self.screen)
+        self.snake_components.draw(self.screen)
+        self.screen.blit(self.apple.image, self.apple.rect)
+        pygame.display.update(self.screen.get_rect())
 
-    def updater(self, node, prev_speed):
+    def play_step(self):
+        self.game_iteration += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == APPLE_EVENT:
+                self.screen.blit(self.apple.image, self.apple.rect)
+                pygame.event.post(pygame.event.Event(GROW_EVENT))
+                if self.frame_rate <= 17:
+                    self.frame_rate += 0.2
+        self.move_snake()
+
+    def move_snake(self):
+        keys_pressed = pygame.key.get_pressed()
+        tail_speed = [self.tail.speed[0], self.tail.speed[1]]
+        tail_x = self.tail.rect.center[0]
+        tail_y = self.tail.rect.center[1]
+        if keys_pressed[K_UP] and self.head.speed[0] != 0:
+            self.head.speed[0] = 0
+            self.head.speed[1] = -BODY_HEIGHT
+            self.head.rect.move_ip(self.head.speed[0], self.head.speed[1])
+            prev_speed = self.head.speed
+            self._move_snake_helper(self.head.next, prev_speed)
+        elif keys_pressed[K_LEFT] and self.head.speed[1] != 0:
+            self.head.speed[0] = -BODY_WIDTH
+            self.head.speed[1] = 0
+            self.head.rect.move_ip(self.head.speed[0], self.head.speed[1])
+            prev_speed = self.head.speed
+            self._move_snake_helper(self.head.next, prev_speed)
+        elif keys_pressed[K_RIGHT] and self.head.speed[1] != 0:
+            self.head.speed[0] = BODY_WIDTH
+            self.head.speed[1] = 0
+            self.head.rect.move_ip(self.head.speed[0], self.head.speed[1])
+            prev_speed = self.head.speed
+            self._move_snake_helper(self.head.next, prev_speed)
+        elif keys_pressed[K_DOWN] and self.head.speed[0] != 0:
+            self.head.speed[0] = 0
+            self.head.speed[1] = BODY_HEIGHT
+            self.head.rect.move_ip(self.head.speed[0], self.head.speed[1])
+            prev_speed = self.head.speed
+            self._move_snake_helper(self.head.next, prev_speed)
+        else:
+            self.head.rect.move_ip(self.head.speed[0], self.head.speed[1])
+            prev_speed = self.head.speed
+            self._move_snake_helper(self.head.next, prev_speed)
+        if pygame.event.peek(GROW_EVENT):
+            tail_node = SnakeComponent(speed=tail_speed,
+                                       x_coord=tail_x, y_coord=tail_y)
+            self.tail.next = tail_node
+            self.tail = tail_node
+            self.snake_components.add(tail_node)
+            self.non_head.add(tail_node)
+            self.snake_length += 1
+
+    def _move_snake_helper(self, node, prev_speed):
         if node is None:
             return
         else:
@@ -151,4 +176,4 @@ class SnakeApp:
             if prev_speed[0] != node.speed[0] and prev_speed[1] != node.speed[1]:
                 node.speed[0] = prev_speed[0]
                 node.speed[1] = prev_speed[1]
-            self.updater(node.next, speed)
+            self._move_snake_helper(node.next, speed)
