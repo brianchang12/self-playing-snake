@@ -182,14 +182,6 @@ class SnakeApp:
             self.head.rect.move_ip(self.head.speed[0], self.head.speed[1])
             prev_speed = self.head.speed
             self._move_snake_helper(self.head.next, prev_speed)
-
-
-
-
-
-
-
-
         if pygame.event.peek(GROW_EVENT):
             tail_node = SnakeComponent(speed=tail_speed,
                                        x_coord=tail_x, y_coord=tail_y)
