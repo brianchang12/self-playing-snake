@@ -1,16 +1,12 @@
 from enum import Enum
 
-import pygame
 import numpy as np
-from button.button import ResetButton
-from constant import *
-from pygame.locals import *
+import pygame
 
 from sprite.apple import *
 from sprite.border import *
 from sprite.snake_component import SnakeComponent
-from text_asset.title import Title
-from modules.point import *
+from text_asset.text import GenerationText, ScoreText
 
 
 class Direction(Enum):
@@ -29,13 +25,15 @@ class SnakeApp:
         self.clock = pygame.time.Clock()
         self.non_head = pygame.sprite.Group()
         self.screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
-        top_border = HorizontalBorder(x_coord=SCREEN_WIDTH / 2, y_coord=BODY_HEIGHT / 2)
-        bottom_border = HorizontalBorder(x_coord=SCREEN_WIDTH / 2, y_coord=SCREEN_HEIGHT - (BODY_HEIGHT / 2))
-        left_border = VerticalBorder(x_coord=BODY_WIDTH / 2, y_coord=SCREEN_HEIGHT / 2)
-        right_border = VerticalBorder(x_coord=SCREEN_WIDTH - (BODY_WIDTH / 2), y_coord=SCREEN_HEIGHT / 2)
+        self.playable_space = pygame.Surface((PLAYABLE_WIDTH, PLAYABLE_HEIGHT))
+        self.playable_space.fill((0, 0, 0))
+        top_border = HorizontalBorder(x_coord=PLAYABLE_WIDTH / 2, y_coord=BODY_HEIGHT / 2)
+        bottom_border = HorizontalBorder(x_coord=PLAYABLE_WIDTH / 2, y_coord=PLAYABLE_HEIGHT - (BODY_HEIGHT / 2))
+        left_border = VerticalBorder(x_coord=BODY_WIDTH / 2, y_coord=PLAYABLE_HEIGHT / 2)
+        right_border = VerticalBorder(x_coord=PLAYABLE_WIDTH - (BODY_WIDTH / 2), y_coord=PLAYABLE_HEIGHT / 2)
         self.borders = pygame.sprite.Group()
         self.borders.add(top_border, left_border, bottom_border, right_border)
-        self.borders.draw(self.screen)
+        self.borders.draw(self.playable_space)
         head_tail = self._build_initial_snake()
         self.head = head_tail[0]
         self.tail = head_tail[1]
@@ -47,10 +45,19 @@ class SnakeApp:
                 self.non_head.add(traverse)
             self.snake_components.add(traverse)
             traverse = traverse.next
-        self.snake_components.draw(self.screen)
+        self.snake_components.draw(self.playable_space)
         self.apple = Apple(self.snake_components)
-        self.screen.blit(self.apple.image, self.apple.rect)
-        pygame.display.update(self.screen.get_rect())
+        self.playable_space.blit(self.apple.image, self.apple.rect)
+        self.text_space = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT - PLAYABLE_HEIGHT))
+        self.text_space_rect = self.text_space.get_rect(topleft=(0, PLAYABLE_HEIGHT))
+        self.gen = 1
+        self.text_space.fill((0, 0, 0))
+        self.gen_text = GenerationText(self.gen)
+        self.score_text = ScoreText(self.score)
+        self.text_space.blit(self.gen_text.image, self.gen_text.rect)
+        self.screen.blit(self.playable_space, self.playable_space.get_rect(topleft=(0, 0)))
+        self.screen.blit(self.text_space, self.text_space_rect)
+        pygame.display.update()
         self.frame_rate = 30
         self.game_iteration = 0
 
@@ -74,15 +81,16 @@ class SnakeApp:
             self.clock.tick(self.frame_rate)
 
     def update_ui(self):
-        self.screen.fill((0, 0, 0))
-        self.borders.draw(self.screen)
-        self.screen.blit(self.apple.image, self.apple.rect)
-        self.snake_components.draw(self.screen)
-        pygame.display.update(self.screen.get_rect())
+        self.playable_space.fill((0, 0, 0))
+        self.borders.draw(self.playable_space)
+        self.playable_space.blit(self.apple.image, self.apple.rect)
+        self.snake_components.draw(self.playable_space)
+        self.screen.blit(self.playable_space, self.playable_space.get_rect(topleft=(0, 0)))
+        pygame.display.update(self.playable_space.get_rect())
 
     def reset(self):
         self.direction = Direction.UP
-        self.screen.fill((0, 0, 0))
+        self.playable_space.fill((0, 0, 0))
         self.game_iteration = 0
         self.score = 0
         self.snake_length = 3
@@ -99,11 +107,13 @@ class SnakeApp:
             self.snake_components.add(traverse)
             traverse = traverse.next
         coordinate = self.apple.randomize(self.snake_components)
+        self.screen.blit(self.text_space, self.text_space.get_rect(topleft=(0, PLAYABLE_HEIGHT)))
         self.apple.rect = self.apple.image.get_rect(center=coordinate)
-        self.borders.draw(self.screen)
-        self.snake_components.draw(self.screen)
-        self.screen.blit(self.apple.image, self.apple.rect)
-        pygame.display.update(self.screen.get_rect())
+        self.borders.draw(self.playable_space)
+        self.snake_components.draw(self.playable_space)
+        self.playable_space.blit(self.apple.image, self.apple.rect)
+        self.screen.blit(self.playable_space, self.playable_space.get_rect(topleft=(0, 0)))
+        pygame.display.update()
 
     def play_step(self, action):
         self.game_iteration += 1
@@ -112,7 +122,7 @@ class SnakeApp:
                 pygame.quit()
                 quit()
             if event.type == APPLE_EVENT:
-                self.screen.blit(self.apple.image, self.apple.rect)
+                self.playable_space.blit(self.apple.image, self.apple.rect)
                 pygame.event.post(pygame.event.Event(GROW_EVENT))
                 if self.frame_rate <= 3:
                     self.frame_rate += 0.2
@@ -123,14 +133,22 @@ class SnakeApp:
         if self.collided() or self.game_iteration > 100 * self.snake_length:
             reward = -10
             game_over = True
-            pygame.time.delay(300)
+            pygame.time.delay(100)
+            self.gen += 1
+            self.text_space.fill((0, 0, 0))
+            self.gen_text = GenerationText(self.gen)
+            self.text_space.blit(self.gen_text.image, self.gen_text.rect)
+            self.screen.blit(self.text_space, self.text_space.get_rect(topleft=(0, PLAYABLE_HEIGHT)))
+            pygame.display.update(pygame.display.update(self.text_space_rect))
             return reward, game_over, self.score
-        if self.head.rect.colliderect(self.apple.rect):
+        elif self.head.rect.colliderect(self.apple.rect):
             coordinate = self.apple.randomize(self.snake_components)
             self.apple.rect = self.apple.image.get_rect(center=coordinate)
             pygame.event.post(pygame.event.Event(APPLE_EVENT))
             reward = 10
             self.score += 1
+        if self.score == MAX_SNAKE - 3:
+            game_over = True
         return reward, game_over, self.score
 
     def collided(self, point=None) -> bool:

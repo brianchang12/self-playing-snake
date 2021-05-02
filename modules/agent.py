@@ -3,6 +3,7 @@ import numpy as np
 import pygame.time
 
 from modules.helper import plot
+from modules.point import Point
 from snake_app import *
 import torch
 from collections import deque
@@ -127,4 +128,6 @@ def train():
 
 
 if __name__ == '__main__':
+    pygame.init()
     train()
+    pygame.quit()

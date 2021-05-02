@@ -5,7 +5,7 @@ from constant import *
 
 class SnakeComponent(pygame.sprite.Sprite):
 
-    def __init__(self, speed, x_coord=SCREEN_WIDTH / 2, y_coord=SCREEN_HEIGHT / 2
+    def __init__(self, speed, x_coord=PLAYABLE_WIDTH / 2, y_coord=PLAYABLE_HEIGHT / 2
                  , head=False):
         super(SnakeComponent, self).__init__()
         self.head = head
