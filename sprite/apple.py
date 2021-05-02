@@ -11,9 +11,9 @@ class Apple(pygame.sprite.Sprite):
         self.coordinates = list()
         width_start = 10
         height_start = 10
-        while width_start < 190:
+        while width_start < 350:
             width_start += 20
-            while height_start < 190:
+            while height_start < 350:
                 height_start += 20
                 coord = (width_start, height_start)
                 self.coordinates.append(coord)

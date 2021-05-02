@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import pygame.time
 
 from modules.helper import plot
 from snake_app import *
@@ -105,6 +106,7 @@ def train():
     while True:
         state_old = agent.get_state(game)
         final_move = agent.get_action(state_old)
+        pygame.time.wait(80)
         reward, done, score = game.play_step(final_move)
         state_new = agent.get_state(game)
         agent.train_short_memory(state_old, final_move, reward, state_new, done)

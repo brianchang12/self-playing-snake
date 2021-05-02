@@ -51,7 +51,7 @@ class SnakeApp:
         self.apple = Apple(self.snake_components)
         self.screen.blit(self.apple.image, self.apple.rect)
         pygame.display.update(self.screen.get_rect())
-        self.frame_rate = 10
+        self.frame_rate = 30
         self.game_iteration = 0
 
     @staticmethod
@@ -86,7 +86,6 @@ class SnakeApp:
         self.game_iteration = 0
         self.score = 0
         self.snake_length = 3
-        self.frame_rate = 10
         self.game_iteration = 0
         for component in self.snake_components:
             component.kill()
@@ -115,7 +114,7 @@ class SnakeApp:
             if event.type == APPLE_EVENT:
                 self.screen.blit(self.apple.image, self.apple.rect)
                 pygame.event.post(pygame.event.Event(GROW_EVENT))
-                if self.frame_rate <= 17:
+                if self.frame_rate <= 3:
                     self.frame_rate += 0.2
         self.move_snake(action)
         self.update_ui()
