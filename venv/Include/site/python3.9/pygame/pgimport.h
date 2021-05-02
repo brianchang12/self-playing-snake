@@ -1,13 +1,3 @@
-#ifndef PGIMPORT_INTERNAL_H
-#define PGIMPORT_INTERNAL_H
-
-#include "include/pgimport.h"
-
-#if PG_HAVE_CAPSULE
-#define encapsulate_api(ptr, module) \
-    PyCapsule_New(ptr, PG_CAPSULE_NAME(module), NULL)
-#else /* ~PG_HAVE_CAPSULE */
-#define encapsulate_api(ptr, module) PyCObject_FromVoidPtr(ptr, NULL)
-#endif /* ~PG_HAVE_CAPSULE */
-
-#endif /* PGIMPORT_INTERNAL_H */
+version https://git-lfs.github.com/spec/v1
+oid sha256:acf598dbf41aae3bc0a71178a1eff0c78832179e7b974c3c686a5c6357b7ab19
+size 377

@@ -21,12 +21,6 @@ class Apple(pygame.sprite.Sprite):
         coordinate = self.randomize(sprites)
         self.rect = self.image.get_rect(center=coordinate)
 
-        # while True:
-        #     coordinate = self.__randomize_coordinate()
-        #     self.rect = self.image.get_rect(center=coordinate)
-        #     if pygame.sprite.spritecollideany(self, sprites) is None:
-        #         break
-
     def randomize(self, sprites) -> tuple:
         copied_coordinates = copy.deepcopy(self.coordinates)
         for sprite in sprites.sprites():

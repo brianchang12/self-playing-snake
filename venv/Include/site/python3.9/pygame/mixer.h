@@ -1,14 +1,3 @@
-#ifndef MIXER_INTERNAL_H
-#define MIXER_INTERNAL_H
-
-#include <SDL_mixer.h>
-
-/* test mixer initializations */
-#define MIXER_INIT_CHECK() \
-    if(!SDL_WasInit(SDL_INIT_AUDIO)) \
-        return RAISE(pgExc_SDLError, "mixer not initialized")
-
-#define PYGAMEAPI_MIXER_NUMSLOTS 7
-#include "include/pygame_mixer.h"
-
-#endif /* ~MIXER_INTERNAL_H */
+version https://git-lfs.github.com/spec/v1
+oid sha256:0594b65a5ce09a462e4c333c0cbfdc03d3a1b959e1daed4f8c141aea464afa9a
+size 354

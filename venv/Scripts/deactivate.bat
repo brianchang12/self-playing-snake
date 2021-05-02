@@ -1,21 +1,3 @@
-@echo off
-
-if defined _OLD_VIRTUAL_PROMPT (
-    set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
-)
-set _OLD_VIRTUAL_PROMPT=
-
-if defined _OLD_VIRTUAL_PYTHONHOME (
-    set "PYTHONHOME=%_OLD_VIRTUAL_PYTHONHOME%"
-    set _OLD_VIRTUAL_PYTHONHOME=
-)
-
-if defined _OLD_VIRTUAL_PATH (
-    set "PATH=%_OLD_VIRTUAL_PATH%"
-)
-
-set _OLD_VIRTUAL_PATH=
-
-set VIRTUAL_ENV=
-
-:END
+version https://git-lfs.github.com/spec/v1
+oid sha256:a1a72a793b74a5e522507e252940b3b332c8897ad438a5e60a042b6ef2c8fbec
+size 368

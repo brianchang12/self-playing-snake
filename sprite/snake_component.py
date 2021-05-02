@@ -17,3 +17,4 @@ class SnakeComponent(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=(x_coord, y_coord))
         self.speed = speed
         self.next = None
+
