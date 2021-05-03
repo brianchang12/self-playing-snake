@@ -172,7 +172,7 @@ class SnakeApp:
     def collided(self, point=None) -> bool:
         compare_rect = self.head.rect
         if point is not None:
-            compare_rect = pygame.Surface((BODY_WIDTH - 0.1, BODY_HEIGHT - 0.1)).get_rect(center=(point.x, point.y))
+            compare_rect = pygame.Surface((BODY_WIDTH - 0.1, BODY_HEIGHT - 0.1)).get_rect(center=(point[0], point[1]))
         for non_head_sprite in self.non_head:
             if compare_rect.colliderect(non_head_sprite.rect):
                 return True

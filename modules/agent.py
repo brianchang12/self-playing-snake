@@ -2,12 +2,11 @@ import random
 import numpy as np
 import pygame.time
 
-from modules.helper import plot
-from modules.point import Point
 from snake_app import *
 import torch
 from collections import deque
 from model import *
+
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
@@ -28,29 +27,24 @@ class SnakeAgent:
         coordinates = head.rect.center
         x_coordinate = coordinates[0]
         y_coordinate = coordinates[1]
-        point_l = Point(x_coordinate - BODY_WIDTH, y_coordinate)
-        point_r = Point(x_coordinate + BODY_WIDTH, y_coordinate)
-        point_u = Point(x_coordinate, y_coordinate - BODY_HEIGHT)
-        point_d = Point(x_coordinate, y_coordinate + BODY_HEIGHT)
+        point_l = (x_coordinate - BODY_WIDTH, y_coordinate)
+        point_r = (x_coordinate + BODY_WIDTH, y_coordinate)
+        point_u = (x_coordinate, y_coordinate - BODY_HEIGHT)
+        point_d = (x_coordinate, y_coordinate + BODY_HEIGHT)
         dir_l = game.direction == Direction.LEFT
         dir_r = game.direction == Direction.RIGHT
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
 
         state = [
-            # Danger straight
             (dir_r and game.collided(point_r)) or
             (dir_l and game.collided(point_l)) or
             (dir_u and game.collided(point_u)) or
             (dir_d and game.collided(point_d)),
-
-            # Danger right
             (dir_u and game.collided(point_r)) or
             (dir_d and game.collided(point_l)) or
             (dir_l and game.collided(point_u)) or
             (dir_r and game.collided(point_d)),
-
-            # Danger left
             (dir_d and game.collided(point_r)) or
             (dir_u and game.collided(point_l)) or
             (dir_r and game.collided(point_u)) or
@@ -98,9 +92,6 @@ class SnakeAgent:
 
 
 def train():
-    plot_scores = []
-    plot_mean_scores = []
-    total_score = 0
     record = 0
     agent = SnakeAgent()
     game = SnakeApp()
@@ -119,12 +110,6 @@ def train():
             if score > record:
                 record = score
                 agent.model.save()
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
-            plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / agent.n_games
-            plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
 
 
 if __name__ == '__main__':
