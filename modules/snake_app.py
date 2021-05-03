@@ -6,7 +6,7 @@ import pygame
 from sprite.apple import *
 from sprite.border import *
 from sprite.snake_component import SnakeComponent
-from text_asset.text import GenerationText, ScoreText
+from text_asset.text import GenerationText, ScoreText, TextFactory
 
 
 class Direction(Enum):
@@ -51,10 +51,15 @@ class SnakeApp:
         self.text_space = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT - PLAYABLE_HEIGHT))
         self.text_space_rect = self.text_space.get_rect(topleft=(0, PLAYABLE_HEIGHT))
         self.gen = 1
+        self.high_score = 0
         self.text_space.fill((0, 0, 0))
-        self.gen_text = GenerationText(self.gen)
-        self.score_text = ScoreText(self.score)
+        self.factory = TextFactory()
+        self.gen_text = self.factory.factory("GenerationText", self.gen)
+        self.score_text = self.factory.factory("ScoreText", self.score)
+        self.high_score_text = self.factory.factory("HighScoreText", self.high_score)
         self.text_space.blit(self.gen_text.image, self.gen_text.rect)
+        self.text_space.blit(self.score_text.image, self.score_text.rect)
+        self.text_space.blit(self.high_score_text.image, self.high_score_text.rect)
         self.screen.blit(self.playable_space, self.playable_space.get_rect(topleft=(0, 0)))
         self.screen.blit(self.text_space, self.text_space_rect)
         pygame.display.update()
@@ -113,6 +118,14 @@ class SnakeApp:
         self.snake_components.draw(self.playable_space)
         self.playable_space.blit(self.apple.image, self.apple.rect)
         self.screen.blit(self.playable_space, self.playable_space.get_rect(topleft=(0, 0)))
+
+        self.text_space.fill((0, 0, 0))
+        self.gen_text.image = self.gen_text.update_text(self.gen)
+        self.score_text.image = self.score_text.update_text(self.score)
+        self.text_space.blit(self.score_text.image, self.score_text.rect)
+        self.text_space.blit(self.gen_text.image, self.gen_text.rect)
+        self.text_space.blit(self.high_score_text.image, self.high_score_text.rect)
+        self.screen.blit(self.text_space, self.text_space.get_rect(topleft=(0, PLAYABLE_HEIGHT)))
         pygame.display.update()
 
     def play_step(self, action):
@@ -135,11 +148,6 @@ class SnakeApp:
             game_over = True
             pygame.time.delay(100)
             self.gen += 1
-            self.text_space.fill((0, 0, 0))
-            self.gen_text = GenerationText(self.gen)
-            self.text_space.blit(self.gen_text.image, self.gen_text.rect)
-            self.screen.blit(self.text_space, self.text_space.get_rect(topleft=(0, PLAYABLE_HEIGHT)))
-            pygame.display.update(pygame.display.update(self.text_space_rect))
             return reward, game_over, self.score
         elif self.head.rect.colliderect(self.apple.rect):
             coordinate = self.apple.randomize(self.snake_components)
@@ -147,6 +155,16 @@ class SnakeApp:
             pygame.event.post(pygame.event.Event(APPLE_EVENT))
             reward = 10
             self.score += 1
+            self.text_space.fill((0, 0, 0))
+            self.score_text.image = self.score_text.update_text(self.score)
+            self.text_space.blit(self.gen_text.image, self.gen_text.rect)
+            self.text_space.blit(self.score_text.image, self.score_text.rect)
+            if self.score > self.high_score:
+                self.high_score = self.score
+                self.high_score_text.image = self.high_score_text.update_text(self.high_score)
+            self.text_space.blit(self.high_score_text.image, self.high_score_text.rect)
+            self.screen.blit(self.text_space, self.text_space.get_rect(topleft=(0, PLAYABLE_HEIGHT)))
+            pygame.display.update(pygame.display.update(self.text_space_rect))
         if self.score == MAX_SNAKE - 3:
             game_over = True
         return reward, game_over, self.score
