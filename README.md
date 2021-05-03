@@ -12,3 +12,9 @@ After 70 games, the snake becomes more consistent and is able to eat multiple ap
 
 https://user-images.githubusercontent.com/59339384/116853713-5ba17f80-abab-11eb-843a-08dea8cbe8f3.mp4
 
+After even more games, the snake is able achieve higher scores.
+
+
+https://user-images.githubusercontent.com/59339384/116853980-c94dab80-abab-11eb-937f-057bdf891aca.mp4
+
+
